@@ -1,3 +1,5 @@
+var ref = new Firebase('https://glaring-torch-5458.firebaseio.com/glaring-torch-5458/');
+
 var Comment = React.createClass({
     rawMarkup: function() {
         var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
@@ -8,7 +10,7 @@ var Comment = React.createClass({
             <div className="comments col-md-12">
                 <div className="panel panel-primary">
                     <div className="panel-heading">
-                        <h3 className="panel-title">{this.props.author} <span className="pull-right">{this.props.time}</span></h3>
+                        <h3 className="panel-title">{this.props.author}</h3>
                     </div>
                     <div className="panel-body">
                         <span dangerouslySetInnerHTML={this.rawMarkup()} />
@@ -23,7 +25,7 @@ var CommentList = React.createClass({
     render: function() {
         var comments = this.props.data.map(function(comment) {
             return (
-                <Comment author={comment.author} time={comment.time}>
+                <Comment author={comment.author}>
                     {comment.text}
                 </Comment>
             );
@@ -45,13 +47,9 @@ var CommentForm = React.createClass({
         if (!text || !author) {
             return;
         }
-        // TODO: send request to the server
-        this.firebaseRef = new Firebase("https://glaring-torch-5458.firebaseio.com/glaring-torch-5458/");
-        this.firebaseRef.push({
-            author: author,
-            text: text
-        });
-        // TODO: send request to the server
+
+        this.props.onCommentSubmit({author: author, text: text});
+
         this.refs.author.value = '';
         this.refs.text.value = '';
         return;
@@ -82,7 +80,7 @@ var CommentForm = React.createClass({
 var CommentBox = React.createClass({
     loadCommentsFromServer: function() {
         $.ajax({
-            url: this.props.url,
+            url: 'https://glaring-torch-5458.firebaseio.com/glaring-torch-5458/comments/',
             dataType: 'json',
             cache: false,
             success: function(data) {
@@ -95,8 +93,20 @@ var CommentBox = React.createClass({
     },
     handleCommentSubmit: function(comment) {
         // TODO: submit to the server and refresh the list
+        var comments = ref.child('comments');
+
+        comments.push({
+            author: comment.author,
+            text: comment.text
+        });
     },
     getInitialState: function() {
+        //ref.on("value", function(snapshot) {
+        //    console.log(snapshot.val());
+        //}, function (errorObject) {
+        //    console.log("The read failed: " + errorObject.code);
+        //});
+
         return {data: []};
     },
     componentDidMount: function() {
@@ -114,4 +124,4 @@ var CommentBox = React.createClass({
     }
 });
 
-ReactDOM.render(<CommentBox url="/api/comments" pollInterval={2000} />, document.getElementById('content'));
+ReactDOM.render(<CommentBox pollInterval={2000} />, document.getElementById('content'));
